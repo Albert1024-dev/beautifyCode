@@ -10,6 +10,10 @@ var beautified = beautify(fileText, {format: "css"});
 
 fs.writeFileSync('beautified.css', beautified);
 
+const Router = require('./routes/api');
+
+app.use('/api', Router);
+
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
