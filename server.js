@@ -1,19 +1,22 @@
 const express = require('express');
 const app = express();
+
+const path = require('path');
+
 const port = 8001;
-
-const fs = require('fs');
-const beautify = require('beautify');
-
-const fileText = fs.readFileSync('./styles.css', 'utf8');
-var beautified = beautify(fileText, {format: "css"});
-
-fs.writeFileSync('beautified.css', beautified);
 
 const Router = require('./routes/api');
 
 app.use('/api', Router);
 
+app.use(express.static(path.join(__dirname, 'public')));
+
+/**
+ * @func app.listen
+ * @description 'example func'
+ * @param port 'params0'
+ * @param ( 'params1'
+ */
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
