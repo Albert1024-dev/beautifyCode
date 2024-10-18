@@ -3,6 +3,8 @@ const beatify = require('beautify');
 const multiparty = require('multiparty');
 const path = require('path');
 
+const { HTML, CSS, JavaScript, TypeScript, JSON } = require('../utils/fileTypes');
+
 exports.beautify = (req, res) => {
     var form = multiparty.Form();
 
@@ -63,6 +65,30 @@ exports.beautify = (req, res) => {
                 if (err) {
                     return res.status(500).json({ error: 'Error saving file' });
                 }
+
+                var fileText = fs.readFileSync('/uploads/' + uploadedFile.originalFilename);
+                var beautified = "";
+                switch (fileType) {
+                    case HTML:
+                        beautified = beautify(fileText, { format: HTML });
+                        break;
+                    case CSS:
+                        beautified = beautify(fileText, { format: CSS });
+                        break;
+                    case JavaScript:
+                        beautified = beautify(fileText, { format: JavaScript });
+                        break;
+                    case TypeScript:
+                        beautified = beautify(fileText, { format: TypeScript });
+                        break;
+                    case JSON:
+                        beautified = beautify(fileText, { format: JSON });
+                        break;
+                    default:
+                        break;
+                }
+                console.log(beautified);
+                res.json()
                 res.status(200).json({ message: 'File uploaded successfully!' });
             });
         }
