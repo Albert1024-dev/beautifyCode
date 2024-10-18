@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const FileSchema = new Schema({
     name: {
         type: String,
-        isrequired: true,
+        required: true,
     },
     created_at: {
         type: Date,
@@ -12,4 +12,5 @@ const FileSchema = new Schema({
     },
 });
 
-export const File = mongoose.model('files', FileSchema);
+const File = mongoose.model('files', FileSchema);
+module.exports = File;
