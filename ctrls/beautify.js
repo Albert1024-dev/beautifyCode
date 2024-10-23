@@ -39,7 +39,7 @@ exports.beautify = (req, res) => {
             }
 
             const tempPath = uploadedFile.path;
-            const targetPath = path.join(__dirname, 'uploads', uploadedFile.originalFilename);
+            const targetPath = path.join(__dirname, '/../public/uploads', uploadedFile.originalFilename);
 
             // Use fs.copyFile to move the file
             fs.copyFile(tempPath, targetPath, (copyErr) => {
