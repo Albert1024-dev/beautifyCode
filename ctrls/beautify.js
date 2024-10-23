@@ -1,96 +1,107 @@
 const fs = require('fs');
-const beatify = require('beautify');
+const beautify = require('beautify');
 const multiparty = require('multiparty');
 const path = require('path');
 
+// Assuming these constants are defined correctly in '../utils/fileTypes'
 const { HTML, CSS, JavaScript, TypeScript, JSON } = require('../utils/fileTypes');
 
 exports.beautify = (req, res) => {
-    var form = multiparty.Form();
+    const form = new multiparty.Form();
 
     form.parse(req, (err, fields, files) => {
         if (err) {
             console.log(err);
-            const result = {
+            return res.json({
                 status: false,
                 data: {
-                    msg: "Error!",
+                    msg: "Error parsing the file!",
                     type: "error",
                 },
-            };
-            return res.json(result);
+            });
         }
 
-        if (files) {
-            var uploadedFile;
-            if (files.file && files.file.length > 0)
-                uploadedFile = files.file[0];
-            else {
-                const reuslt = {
+        if (files && files.file && files.file.length > 0) {
+            const uploadedFile = files.file[0];
+            console.log('Uploaded file:', uploadedFile);
+
+            const fileTypes = ['html', 'css', 'js', 'json', 'ts', 'md'];
+            const fileType = uploadedFile.originalFilename.split('.').pop().toLowerCase();
+
+            if (!fileTypes.includes(fileType)) {
+                return res.json({
                     status: false,
                     data: {
-                        msg: 'No file, Select One!',
-                        type: 'error'
-                    },
-                };
-                return res.json(result);
-            }
-
-            const fileTypes = [
-                'html',
-                'css',
-                'js',
-                'json',
-                'ts',
-                'md',
-            ];
-
-            const fileType = uploadedFile.originalFilename.split('.');
-            if (!fileTypes.includes(fileType[fileType.length - 1])) {
-                const result = {
-                    status: false,
-                    data: {
-                        msg: 'Incorrect file type, select correct file!',
+                        msg: 'Incorrect file type, select a correct file!',
                         type: 'error',
                     },
-                };
-                return res.json(result);
+                });
             }
 
             const tempPath = uploadedFile.path;
             const targetPath = path.join(__dirname, 'uploads', uploadedFile.originalFilename);
 
-            // Move the file to the uploads directory
-            fs.rename(tempPath, targetPath, (err) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Error saving file' });
+            // Use fs.copyFile to move the file
+            fs.copyFile(tempPath, targetPath, (copyErr) => {
+                if (copyErr) {
+                    return res.status(500).json({ error: 'Error copying file' });
                 }
 
-                var fileText = fs.readFileSync('/uploads/' + uploadedFile.originalFilename);
-                var beautified = "";
-                switch (fileType) {
-                    case HTML:
-                        beautified = beautify(fileText, { format: HTML });
-                        break;
-                    case CSS:
-                        beautified = beautify(fileText, { format: CSS });
-                        break;
-                    case JavaScript:
-                        beautified = beautify(fileText, { format: JavaScript });
-                        break;
-                    case TypeScript:
-                        beautified = beautify(fileText, { format: TypeScript });
-                        break;
-                    case JSON:
-                        beautified = beautify(fileText, { format: JSON });
-                        break;
-                    default:
-                        break;
-                }
-                console.log(beautified);
-                res.json()
-                res.status(200).json({ message: 'File uploaded successfully!' });
+                // Delete the original temp file
+                fs.unlink(tempPath, (unlinkErr) => {
+                    if (unlinkErr) {
+                        return res.status(500).json({ error: 'Error deleting temp file' });
+                    }
+
+                    // Read the file from the uploads directory
+                    const fileText = fs.readFileSync(targetPath, 'utf8');
+                    let beautified = "";
+
+                    switch (fileType) {
+                        case 'html':
+                            beautified = beautify(fileText, { format: 'html' });
+                            break;
+                        case 'css':
+                            beautified = beautify(fileText, { format: 'css' });
+                            break;
+                        case 'js':
+                            beautified = beautify(fileText, { format: 'js' });
+                            break;
+                        case 'ts':
+                            beautified = beautify(fileText, { format: 'ts' });
+                            break;
+                        case 'json':
+                            beautified = beautify(fileText, { format: 'json' });
+                            break;
+                        default:
+                            return res.json({
+                                status: false,
+                                data: {
+                                    msg: 'Unsupported file type!',
+                                    type: 'error',
+                                },
+                            });
+                    }
+
+                    // Respond with the beautified code
+                    res.json({
+                        status: true,
+                        data: {
+                            beautified,
+                            msg: 'File beautified successfully!',
+                            type: 'success',
+                        },
+                    });
+                });
+            });
+        } else {
+            return res.json({
+                status: false,
+                data: {
+                    msg: 'No file, please select one!',
+                    type: 'error',
+                },
             });
         }
-    })
-}
+    });
+};
